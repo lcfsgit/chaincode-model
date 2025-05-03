@@ -1,0 +1,96 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+plugins {
+    id 'com.github.johnrengelman.shadow' version '7.1.1'
+    id 'application'
+    id 'checkstyle'
+    id 'jacoco'
+}
+
+group 'org.hyperledger.fabric.samples'
+version '1.0-SNAPSHOT'
+
+dependencies {
+    implementation 'org.hyperledger.fabric-chaincode-java:fabric-chaincode-shim:2.4.1'
+    implementation 'org.json:json:+'
+    implementation 'com.owlike:genson:1.5'
+    testImplementation 'org.hyperledger.fabric-chaincode-java:fabric-chaincode-shim:2.4.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.4.2'
+    testImplementation 'org.assertj:assertj-core:3.11.1'
+    testImplementation 'org.mockito:mockito-core:2.+'
+    // https://mvnrepository.com/artifact/org.codehaus.jackson/jackson-core-asl
+    implementation("org.codehaus.jackson:jackson-core-asl:1.9.13")
+    // https://mvnrepository.com/artifact/com.alibaba.fastjson2/fastjson2
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.0'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.13.0'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.0'
+
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url 'https://jitpack.io'
+    }
+}
+
+application {
+    mainClass = 'org.hyperledger.fabric.contract.ContractRouter'
+}
+
+checkstyle {
+    toolVersion '8.21'
+    configFile file("config/checkstyle/checkstyle.xml")
+}
+
+checkstyleMain {
+    source ='src/main/java'
+}
+
+checkstyleTest {
+    source ='src/test/java'
+}
+
+jacocoTestReport {
+    dependsOn test
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.9
+            }
+        }
+    }
+
+    finalizedBy jacocoTestReport
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+mainClassName = 'org.hyperledger.fabric.contract.ContractRouter'
+
+shadowJar {
+    archiveBaseName = 'chaincode'
+    version = null
+    archiveClassifier = null
+
+    manifest {
+        attributes 'Main-Class': 'org.hyperledger.fabric.contract.ContractRouter'
+    }
+}
+
+apply plugin: 'java'
+sourceCompatibility = 17
+targetCompatibility = 17
+
+check.dependsOn jacocoTestCoverageVerification
+installDist.dependsOn check
